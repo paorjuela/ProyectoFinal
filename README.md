@@ -1,6 +1,6 @@
-# Análisis de movilidad en la zona metropolitana del Valle de México.
+# titulo.
 
-Estamos trabajando con el dataset **"Número de sistemas de transporte disponibles por manzana"**, para entender la desigualdad en la movilidad urbana.
+Estamos trabajando con el dataset **"algo"**, para adhkdshfkshfj
 
 ## 1. Sobre el Dataset 
 
@@ -8,27 +8,27 @@ Estamos trabajando con el dataset **"Número de sistemas de transporte disponibl
 
 Favor de no usar un formato pregunta-respuesta 
 - Descripción general de los datos
-  Este conjunto de datos cruza la ubicación de la gente (a nivel manzana) con la infraestructura de transporte disponible. Nos dice qué opciones (Metro, Metrobús, Bici, etc.) tiene a la mano una persona dependiendo de dónde vive.
+ aaaaaaaaaaaaa
   
 - ¿Quién los recolecta?
-   Este data set fue generado por el **CentroGeo** (Centro de Investigación en Ciencias de Información Geoespacial) junto con el **IPDP** (Instituto de Planeación Democrática y Prospectiva).
+   aaaaaaaaaaaaaaa
   
 - ¿Cuál es el propósito de su recolección?
-  Planeación urbana
+  aaaaaaaaaaaaaa
   
 - ¿Dónde se pueden obtener?
-  Se encuentra en los portales de Datos Abiertos de la CDMX
+ aaaaaaaaaaaaaaa
   
 - ¿Con qué frecuencia se actualizan?
-   No es en tiempo real. Se actualiza de forma irregular cuando hay nuevos planes de desarrollo urbano.
+   aaaaaaaaaaaaaa
 
 ## 2. Caracteristicas de los Datos
 
 Favor de no usar un formato pregunta-respuesta
 - ¿Cuántas tuplas y cuántos atributos tiene el set de datos?
 
-* **Volumen:** 156,900 registros (Tuplas).
-* **Dimensiones:** 14 columnas (Atributos).
+* **Volumen:** a registros (Tuplas).
+* **Dimensiones:** a columnas (Atributos).
 
 ## 3. Diccionario de Datos 
 Favor de no usar un formato pregunta-respuesta
@@ -42,19 +42,19 @@ desglose de cada columna:
 
 | Atributo | Tipo | ¿Qué es? |
 | :--- | :--- | :--- |
-| **CVEGEO** | Texto | "Primary Key" geográfica. Identificaa cada manzana  |
-| **POB1** | Numérico | Cantidad de personas que viven ahí |
-| **OID_1** | Numérico | ID del GIS |
-| **Metro, Suburbano, Metrobus, RTP, etc.** | Numérico | "Banderas" que indican la presencia/cercanía de ese transporte en la manzana. |
-| **Cobertura** | Categórico | Una clasificación general de qué tan bien conectada está la zona. |
+| **a** | Texto | sfwkmflkwjkflw  |
+| **b** | Numérico | wkfjmlwkejmflkwe |
+| **c** | Numérico | jnckjwnfkjhwnkej |
+| **d** | Numérico | sfwñkfwe. |
+| **e** | Categórico | lkweñfñwledkf |
 
-> **Nota:** Las columnas de transporte incluyen: *Metro, Suburbano, Metrobus, Tren_Liger, Trolebus, RTP, Trole_elev, T_Concesio (micros), Ecobici y Cablebus*.
+> **Nota:** ijrweofjhriogher.
 
 ## Tipos de Datos
-* **Texto / Strings:** `CVEGEO`.
-* **Numéricos:** `POB1` (población) y todas las variables de transporte (que funcionan como booleanos, 1 para true y 0 para false).
-* **Categóricos:** `Cobertura` (Nivel de servicio).
-* **Temporales:** **Ninguno.** El dataset es estático, no tiene columnas de tipo `Date` o `Timestamp`, pues representa un momento específico en el tiempo.
+* **Texto / Strings:** `a`.
+* **Numéricos:** `a` djfkejf.
+* **Categóricos:** `a` a.
+* **Temporales:** **Ninguno.** lol.
 
 ## 5. Objetivo del Proyecto 
 Favor de no usar un formato pregunta-respuesta
@@ -66,6 +66,6 @@ equipo?
 Favor de no usar un formato pregunta-respuesta
 ¿Qué consideraciones éticas conlleva el análisis y explotación de dichos datos? 
 
-* **El problema del tiempo:** La última actualización de los datos fue en 2022, el mapa podría decir que en una zona no vive nadie, cuando, en la actualidad, ya podría tener gente.
-* **Privacidad:** Hay manzanas con muy poquita población (ej. 3 personas). Con la `CVEGEO` se podría ubicar a familias específicas, lo cual podría ser un riesgo de privacidad si cruzamos esto con datos socioeconómicos.
-* **¿Qué cuenta como transporte?:** La variable `T_Concesio` mete en una misma categoría a muchos tipos de transporte. Además, si el dataset ignora el transporte informal (taxis pirata, bicitaxis), algunas zonas se verán más "aisladas" de lo que realmente están.
+* **jdejm** aaldkj
+* **klfjlf** adlklkfm
+* **ljdlekd:** alkjdladj
