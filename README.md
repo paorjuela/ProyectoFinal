@@ -1,6 +1,6 @@
 # Análisis del Comercio Global por Internet.
 
-Estamos trabajando con el dataset **"Global Super Store"** para analizar el comercio en línea e informarnos sobre datos relevantes para los consumidores y vendedores de este tipo de productos.
+Estamos trabajando con el dataset **"Global Super Store"**, con el que analizaremos transacciones de comercio en línea para identificar patrones de compra y métricas útiles para vendedores y consumidores.
 
 ## 1. Sobre el Dataset 
 
