@@ -6,7 +6,7 @@ Estamos trabajando con el dataset **"Global Super Store"**, con el que analizare
 
 ### Descripción General
 
-El Dataset contiene información sobre miles de transacciones comerciales hechas por usuarios a través de la red entre el 1 de enero de 2011 y el 31 de diciembre de 2014. La información de las transacciones contiene datos importantes de los compradores, lugares de residencia, montos monetarios e información del producto, entre otras cosas.
+El Dataset contiene información sobre miles de transacciones comerciales hechas por usuarios a través de la red entre el 1 de enero de 2011 y el 31 de diciembre de 2014. La información de las transacciones contiene datos importantes de los compradores, lugares de residencia, montos monetarios, información del producto, entre otras cosas.
 
 Los datos fueron extraidos de Kaggle con el url "https://www.kaggle.com/datasets/apoorvaappz/global-super-store-dataset/data" y recolectados en 2020 por Apoorva Mahalingappa (estudiante de Ciencia de Datos en Great Lakes Institute of Management, India) con el proposito de analizar las compras de productos en internet y extraer tendencias comerciales; como lo es el producto con más ventas, los países con mayor cantidad de transacciones, a qué sector pertenecen la mayor cantidad de compradores, etc.
 
