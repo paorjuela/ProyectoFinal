@@ -76,7 +76,7 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
      \i scripts/04_normalizacion.sql
      \i scripts/05_analisis.sql
 
-### Carga Inicial y ánalisis preliminar
+### *Carga Inicial y ánalisis preliminar*
 
 ### Esqeuma inicial de carga:
     La tala raw "orders" recibe todos los atributos del CSV sin normalizar. Usamos "row_id" como principal natural primary key, ya que cada tupla del dataset tiene una línea de pedido única.
@@ -107,4 +107,4 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
       shipping_cost  NUMERIC(15,2),
       order_priority VARCHAR(20)
     );
-*nota:* todo el script creación y del ánalisis exploratorios se encuentran en  scripts/02_analisis_exploratorio.sql 
+    *nota:* todo el script creación y del ánalisis exploratorios se encuentran en  scripts/02_analisis_exploratorio.sql 
