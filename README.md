@@ -76,11 +76,11 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
      \i scripts/04_normalizacion.sql
      \i scripts/05_analisis.sql
 
-## Carga Inicial y ánalisis preliminar
+### Carga Inicial y ánalisis preliminar
 
-### Esqeuma inicial de carga:
+## Esqeuma inicial de carga:
     La tala raw "orders" recibe todos los atributos del CSV sin normalizar. 
-    Usamos "row_id" como principal natural primary key, ya que cada tupla del dataset tiene una línea de pedido único.
+    Usamos "row_id" como principal natural primary key, ya que cada tupla del dataset tiene una línea de pedido única.
 
     CREATE TABLE orders (
       row_id         INT PRIMARY KEY,
