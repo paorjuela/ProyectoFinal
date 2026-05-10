@@ -1,0 +1,371 @@
+<html>
+<head>
+<title>limpieza_y_normalizacion.sql</title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<style type="text/css">
+.s0 { color: #15845d;}
+.s1 { color: #bfa5a2;}
+.s2 { color: #bfa5a2;}
+.s3 { color: #917679; font-style: italic;}
+.s4 { color: #9876aa;}
+</style>
+</head>
+<body bgcolor="#2c2122">
+<table CELLSPACING=0 CELLPADDING=5 COLS=1 WIDTH="100%" BGCOLOR="#606060" >
+<tr><td><center>
+<font face="Arial, Helvetica" color="#000000">
+limpieza_y_normalizacion.sql</font>
+</center></td></tr></table>
+<pre><span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">postal_code;</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">row_id;</span>
+
+<span class="s3">--DROP SCHEMA IF EXISTS norm CASCADE;</span>
+<span class="s0">CREATE SCHEMA IF NOT EXISTS </span><span class="s1">norm;</span>
+
+<span class="s3">--crear tabla customer</span>
+<span class="s3">--DROP TABLE IF EXISTS norm.customer;</span>
+<span class="s0">CREATE TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer </span><span class="s2">(</span>
+	<span class="s1">id </span><span class="s0">BIGSERIAL PRIMARY KEY</span><span class="s1">,</span>
+	<span class="s1">customer_id </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s1">customer_name </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">255</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">segment </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+
+	<span class="s0">CONSTRAINT </span><span class="s1">unique_customer_id </span><span class="s0">UNIQUE </span><span class="s2">(</span><span class="s1">customer_id</span><span class="s2">)</span>
+<span class="s2">)</span><span class="s1">;</span>
+
+<span class="s3">--poblar tabla de customer</span>
+<span class="s0">INSERT INTO </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer </span><span class="s2">(</span><span class="s1">customer_id, customer_name, segment</span><span class="s2">)</span>
+	<span class="s0">SELECT DISTINCT </span><span class="s1">customer_id, customer_name, segment</span>
+	<span class="s0">FROM </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders;</span>
+
+<span class="s3">--crear atributo customer_id_alt</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD COLUMN </span><span class="s1">customer_id_alt </span><span class="s0">BIGINT</span><span class="s1">;</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD FOREIGN KEY </span><span class="s2">(</span><span class="s1">customer_id_alt</span><span class="s2">) </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)</span><span class="s1">;</span>
+
+<span class="s0">UPDATE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span>
+<span class="s0">SET </span><span class="s1">customer_id_alt = </span><span class="s2">(</span>
+	<span class="s0">SELECT </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer</span><span class="s2">.</span><span class="s1">id</span>
+	<span class="s0">FROM </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer</span>
+	<span class="s0">WHERE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer</span><span class="s2">.</span><span class="s1">customer_id = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">customer_id</span>
+<span class="s2">)</span>
+<span class="s0">WHERE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">customer_id_alt </span><span class="s0">IS NULL</span><span class="s1">;</span>
+
+<span class="s3">--borrar atributo raw.orders.customer_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">customer_id;</span>
+<span class="s3">--borrar atributo raw.orders.customer_name</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">customer_name;</span>
+<span class="s3">--borrar atributo raw.orders.segment</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">segment;</span>
+
+<span class="s3">--borrar atributo norm.customer.customer_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer </span><span class="s0">DROP COLUMN </span><span class="s1">customer_id;</span>
+
+<span class="s3">--actualizo el nombre customer_id_alt a customer_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">RENAME COLUMN </span><span class="s1">customer_id_alt </span><span class="s0">TO </span><span class="s1">customer_id;</span>
+
+<span class="s3">/* 
+SELECT * 
+FROM raw.orders; 
+ 
+SELECT * 
+FROM norm.customer; 
+ 
+SELECT raw.orders.*, 
+       norm.customer.* 
+FROM raw.orders 
+JOIN norm.customer ON raw.orders.customer_id = norm.customer.id;*/</span>
+
+
+<span class="s3">--crear tabla product</span>
+<span class="s3">--DROP TABLE IF EXISTS norm.product;</span>
+<span class="s0">CREATE TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product </span><span class="s2">(</span>
+	<span class="s1">id </span><span class="s0">BIGSERIAL PRIMARY KEY</span><span class="s1">,</span>
+	<span class="s1">product_id </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s0">category VARCHAR</span><span class="s2">(</span><span class="s4">100</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">sub_category </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">100</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">product_name </span><span class="s0">TEXT</span><span class="s1">,</span>
+
+	<span class="s0">CONSTRAINT </span><span class="s1">unique_product_id_product_name </span><span class="s0">UNIQUE </span><span class="s2">(</span><span class="s1">product_id, product_name</span><span class="s2">)</span>
+<span class="s2">)</span><span class="s1">;</span>
+
+<span class="s3">--poblar tabla de product</span>
+<span class="s0">INSERT INTO </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product </span><span class="s2">(</span><span class="s1">product_id, </span><span class="s0">category</span><span class="s1">, sub_category, product_name</span><span class="s2">)</span>
+	<span class="s0">SELECT DISTINCT </span><span class="s1">product_id, </span><span class="s0">category</span><span class="s1">, sub_category, product_name</span>
+	<span class="s0">FROM </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders;</span>
+
+<span class="s3">--crear atributo product_id_alt</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD COLUMN </span><span class="s1">product_id_alt </span><span class="s0">BIGINT</span><span class="s1">;</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD FOREIGN KEY </span><span class="s2">(</span><span class="s1">product_id_alt</span><span class="s2">) </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)</span><span class="s1">;</span>
+
+<span class="s0">UPDATE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span>
+<span class="s0">SET </span><span class="s1">product_id_alt = </span><span class="s2">(</span>
+	<span class="s0">SELECT </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product</span><span class="s2">.</span><span class="s1">id</span>
+	<span class="s0">FROM </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product</span>
+	<span class="s0">WHERE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product</span><span class="s2">.</span><span class="s1">product_id = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">product_id</span>
+		  <span class="s0">AND </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product</span><span class="s2">.</span><span class="s1">product_name = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">product_name</span>
+<span class="s2">)</span>
+<span class="s0">WHERE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">product_id_alt </span><span class="s0">IS NULL</span><span class="s1">;</span>
+
+
+<span class="s3">--borrar atributo raw.orders.product_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">product_id;</span>
+<span class="s3">--borrar atributo raw.orders.category</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN category</span><span class="s1">;</span>
+<span class="s3">--borrar atributo raw.orders.sub_category</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">sub_category;</span>
+<span class="s3">--borrar atributo raw.orders.product_name</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">product_name;</span>
+
+<span class="s3">--borrar atributo norm.product.product_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product </span><span class="s0">DROP COLUMN </span><span class="s1">product_id;</span>
+
+<span class="s3">--actualizo el nombre product_id_alt a product_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">RENAME COLUMN </span><span class="s1">product_id_alt </span><span class="s0">TO </span><span class="s1">product_id;</span>
+
+<span class="s3">/* 
+SELECT * 
+FROM raw.orders; 
+ 
+SELECT * 
+FROM norm.product; 
+ 
+SELECT raw.orders.*, 
+       norm.product.* 
+FROM raw.orders 
+JOIN norm.product ON raw.orders.product_id = norm.product.id; 
+ 
+WITH unicos AS ( 
+SELECT DISTINCT product_id_alt, 
+       category, 
+       sub_category, 
+       product_name 
+FROM raw.orders 
+ORDER BY product_id_alt 
+) 
+SELECT * 
+FROM unicos AS t1 
+JOIN unicos AS t2 ON t1.product_id_alt = t2.product_id_alt 
+                AND (t1.category != t2.category 
+                OR t1.sub_category != t2.sub_category 
+                OR t1.product_name != t2.product_name);*/</span>
+
+
+<span class="s3">-- geography se crea antes que order porque order referencia geography_id</span>
+<span class="s3">--crear tabla geography</span>
+<span class="s3">--DROP TABLE IF EXISTS norm.geography;</span>
+<span class="s0">CREATE TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography </span><span class="s2">(</span>
+	<span class="s1">id </span><span class="s0">BIGSERIAL PRIMARY KEY</span><span class="s1">,</span>
+	<span class="s1">city </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">100</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s1">state </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">100</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s1">country </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">100</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s1">market </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s1">region </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+
+	<span class="s0">CONSTRAINT </span><span class="s1">unique_city_state_country </span><span class="s0">UNIQUE </span><span class="s2">(</span><span class="s1">city, state, country</span><span class="s2">)</span>
+<span class="s2">)</span><span class="s1">;</span>
+
+<span class="s3">--poblar tabla de geography</span>
+<span class="s3">--se toma el (market, region) mas frecuente por (city, state, country)</span>
+<span class="s3">--para corregir las 348 filas sucias de Austria y Mongolia</span>
+<span class="s0">INSERT INTO </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography </span><span class="s2">(</span><span class="s1">city, state, country, market, region</span><span class="s2">)</span>
+<span class="s0">SELECT DISTINCT ON </span><span class="s2">(</span><span class="s1">city, state, country</span><span class="s2">)</span>
+	<span class="s1">city, state, country, market, region</span>
+<span class="s0">FROM </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span>
+<span class="s0">GROUP BY </span><span class="s1">city, state, country, market, region</span>
+<span class="s0">ORDER BY </span><span class="s1">city, state, country, COUNT</span><span class="s2">(</span><span class="s1">*</span><span class="s2">) </span><span class="s0">DESC</span><span class="s1">;</span>
+
+<span class="s3">--crear atributo geography_id_alt</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD COLUMN </span><span class="s1">geography_id_alt </span><span class="s0">BIGINT</span><span class="s1">;</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD FOREIGN KEY </span><span class="s2">(</span><span class="s1">geography_id_alt</span><span class="s2">) </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)</span><span class="s1">;</span>
+
+<span class="s0">UPDATE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span>
+<span class="s0">SET </span><span class="s1">geography_id_alt = </span><span class="s2">(</span>
+	<span class="s0">SELECT </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span><span class="s2">.</span><span class="s1">id</span>
+	<span class="s0">FROM </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span>
+	<span class="s0">WHERE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span><span class="s2">.</span><span class="s1">city = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">city</span>
+	  <span class="s0">AND </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span><span class="s2">.</span><span class="s1">state = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">state</span>
+	  <span class="s0">AND </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span><span class="s2">.</span><span class="s1">country = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">country</span>
+<span class="s2">)</span>
+<span class="s0">WHERE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">geography_id_alt </span><span class="s0">IS NULL</span><span class="s1">;</span>
+
+<span class="s3">--borrar atributo raw.orders.city</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">city;</span>
+<span class="s3">--borrar atributo raw.orders.state</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">state;</span>
+<span class="s3">--borrar atributo raw.orders.country</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">country;</span>
+<span class="s3">--borrar atributo raw.orders.market</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">market;</span>
+<span class="s3">--borrar atributo raw.orders.region</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">region;</span>
+
+<span class="s3">--actualizo el nombre geography_id_alt a geography_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">RENAME COLUMN </span><span class="s1">geography_id_alt </span><span class="s0">TO </span><span class="s1">geography_id;</span>
+
+<span class="s3">/* 
+SELECT * 
+FROM raw.orders; 
+ 
+SELECT * 
+FROM norm.geography; 
+ 
+SELECT raw.orders.*, 
+       norm.geography.* 
+FROM raw.orders 
+JOIN norm.geography ON raw.orders.geography_id = norm.geography.id;*/</span>
+
+
+<span class="s3">--crear tabla order</span>
+<span class="s3">--DROP TABLE IF EXISTS norm.&quot;order&quot;;</span>
+<span class="s0">CREATE TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot; </span><span class="s2">(</span>
+	<span class="s1">id </span><span class="s0">BIGSERIAL PRIMARY KEY</span><span class="s1">,</span>
+	<span class="s1">order_id </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+	<span class="s1">customer_id </span><span class="s0">BIGINT</span><span class="s1">,</span>
+    	<span class="s1">order_date </span><span class="s0">DATE</span><span class="s1">,</span>
+    	<span class="s1">geography_id </span><span class="s0">BIGINT</span><span class="s1">, </span><span class="s3">-- reemplaza city, state, country, market, region</span>
+    	<span class="s1">order_priority </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">20</span><span class="s2">)</span><span class="s1">,</span>
+
+	<span class="s0">FOREIGN KEY </span><span class="s2">(</span><span class="s1">customer_id</span><span class="s2">)  </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">customer</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)  </span><span class="s0">ON DELETE RESTRICT</span><span class="s1">,</span>
+	<span class="s0">FOREIGN KEY </span><span class="s2">(</span><span class="s1">geography_id</span><span class="s2">) </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">geography</span><span class="s2">(</span><span class="s1">id</span><span class="s2">) </span><span class="s0">ON DELETE RESTRICT</span><span class="s1">,</span>
+
+	<span class="s0">CONSTRAINT </span><span class="s1">unique_order_id_customer_id_order_date </span><span class="s0">UNIQUE </span><span class="s2">(</span><span class="s1">order_id, customer_id, order_date</span><span class="s2">)</span>
+<span class="s2">)</span><span class="s1">;</span>
+
+<span class="s3">--poblar tabla order</span>
+<span class="s0">INSERT INTO </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot; </span><span class="s2">(</span><span class="s1">order_id, customer_id, order_date, geography_id, order_priority</span><span class="s2">)</span>
+	<span class="s0">SELECT DISTINCT </span><span class="s1">order_id, customer_id, order_date, geography_id, order_priority</span>
+	<span class="s0">FROM </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders;</span>
+
+<span class="s3">--crear atributo order_id_alt</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD COLUMN </span><span class="s1">order_id_alt </span><span class="s0">BIGINT</span><span class="s1">;</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">ADD FOREIGN KEY </span><span class="s2">(</span><span class="s1">order_id_alt</span><span class="s2">) </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)</span><span class="s1">;</span>
+
+<span class="s0">UPDATE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span>
+<span class="s0">SET </span><span class="s1">order_id_alt = </span><span class="s2">(</span>
+	<span class="s0">SELECT </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span><span class="s2">.</span><span class="s1">id</span>
+	<span class="s0">FROM </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span>
+	<span class="s0">WHERE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span><span class="s2">.</span><span class="s1">order_id = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">order_id</span>
+		  <span class="s0">AND </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span><span class="s2">.</span><span class="s1">customer_id = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">customer_id</span>
+		  <span class="s0">AND </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span><span class="s2">.</span><span class="s1">order_date  = &quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">order_date</span>
+<span class="s2">)</span>
+<span class="s0">WHERE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders</span><span class="s2">.</span><span class="s1">order_id_alt </span><span class="s0">IS NULL</span><span class="s1">;</span>
+
+
+<span class="s3">--borrar atributo raw.orders.order_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">order_id;</span>
+<span class="s3">--borrar atributo raw.orders.customer_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">customer_id;</span>
+<span class="s3">--borrar atributo raw.orders.order_date</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">order_date;</span>
+<span class="s3">--borrar atributo raw.orders.geography_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">geography_id;</span>
+<span class="s3">--borrar atributo raw.orders.order_priority</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">order_priority;</span>
+
+<span class="s3">--borrar atributo norm.&quot;order&quot;.order_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot; </span><span class="s0">DROP COLUMN </span><span class="s1">order_id;</span>
+
+<span class="s3">--actualizo el nombre order_id_alt a order_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">RENAME COLUMN </span><span class="s1">order_id_alt </span><span class="s0">TO </span><span class="s1">order_id;</span>
+
+<span class="s3">/* 
+SELECT * 
+FROM raw.orders; 
+ 
+SELECT * 
+FROM norm.&quot;order&quot;; 
+ 
+SELECT raw.orders.*, 
+       norm.&quot;order&quot;.* 
+FROM raw.orders 
+JOIN norm.&quot;order&quot; ON raw.orders.order_id = norm.&quot;order&quot;.id; 
+ 
+WITH unicos AS ( 
+SELECT DISTINCT order_id_alt, customer_id, order_date, geography_id, order_priority 
+FROM raw.orders 
+ORDER BY order_id_alt 
+) 
+SELECT * 
+FROM unicos AS t1 
+JOIN unicos AS t2 ON t1.order_id_alt = t2.order_id_alt 
+                AND (t1.customer_id != t2.customer_id 
+                OR t1.order_date != t2.order_date 
+                OR t1.geography_id != t2.geography_id 
+                OR t1.order_priority != t2.order_priority 
+);*/</span>
+
+
+<span class="s3">--crear tabla order_product</span>
+<span class="s3">--DROP TABLE IF EXISTS norm.order_product;</span>
+<span class="s0">CREATE TABLE </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">order_product </span><span class="s2">(</span>
+	<span class="s1">id </span><span class="s0">BIGSERIAL PRIMARY KEY</span><span class="s1">,</span>
+	<span class="s1">order_id </span><span class="s0">BIGINT</span><span class="s1">,</span>
+	<span class="s1">product_id </span><span class="s0">BIGINT</span><span class="s1">,</span>
+	<span class="s1">ship_date </span><span class="s0">DATE</span><span class="s1">,</span>
+	<span class="s1">ship_mode </span><span class="s0">VARCHAR</span><span class="s2">(</span><span class="s4">50</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">shipping_cost </span><span class="s0">NUMERIC</span><span class="s2">(</span><span class="s4">15</span><span class="s1">,</span><span class="s4">2</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">sales </span><span class="s0">NUMERIC</span><span class="s2">(</span><span class="s4">15</span><span class="s1">,</span><span class="s4">2</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">quantity </span><span class="s0">INT</span><span class="s1">,</span>
+    	<span class="s1">discount </span><span class="s0">NUMERIC</span><span class="s2">(</span><span class="s4">5</span><span class="s1">,</span><span class="s4">2</span><span class="s2">)</span><span class="s1">,</span>
+    	<span class="s1">profit </span><span class="s0">NUMERIC</span><span class="s2">(</span><span class="s4">15</span><span class="s1">,</span><span class="s4">2</span><span class="s2">)</span><span class="s1">,</span>
+
+    	<span class="s0">FOREIGN KEY </span><span class="s2">(</span><span class="s1">order_id</span><span class="s2">)   </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">&quot;order&quot;</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)  </span><span class="s0">ON DELETE RESTRICT</span><span class="s1">,</span>
+    	<span class="s0">FOREIGN KEY </span><span class="s2">(</span><span class="s1">product_id</span><span class="s2">) </span><span class="s0">REFERENCES </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">product</span><span class="s2">(</span><span class="s1">id</span><span class="s2">)  </span><span class="s0">ON DELETE RESTRICT</span><span class="s1">,</span>
+
+	<span class="s3">-- shipping_cost es una metrica, no parte de la clave natural</span>
+	<span class="s0">CONSTRAINT </span><span class="s1">unique_order_id_product_id </span><span class="s0">UNIQUE </span><span class="s2">(</span><span class="s1">order_id, product_id</span><span class="s2">)</span>
+<span class="s2">)</span><span class="s1">;</span>
+
+<span class="s3">--poblar tabla order_product</span>
+<span class="s0">INSERT INTO </span><span class="s1">norm</span><span class="s2">.</span><span class="s1">order_product </span><span class="s2">(</span><span class="s1">order_id, product_id, ship_date, ship_mode, shipping_cost, sales, quantity, discount, profit</span><span class="s2">)</span>
+	<span class="s0">SELECT DISTINCT </span><span class="s1">order_id, product_id, ship_date, ship_mode, shipping_cost, sales, quantity, discount, profit</span>
+	<span class="s0">FROM </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders;</span>
+
+<span class="s3">--borrar atributo raw.orders.order_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">order_id;</span>
+<span class="s3">--borrar atributo raw.orders.product_id</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">product_id;</span>
+<span class="s3">--borrar atributo raw.orders.ship_date</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">ship_date;</span>
+<span class="s3">--borrar atributo raw.orders.ship_mode</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">ship_mode;</span>
+<span class="s3">--borrar atributo raw.orders.ahipping_cost</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">shipping_cost;</span>
+<span class="s3">--borrar atributo raw.orders.sales</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">sales;</span>
+<span class="s3">--borrar atributo raw.orders.quantity</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">quantity;</span>
+<span class="s3">--borrar atributo raw.orders.discount</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">discount;</span>
+<span class="s3">--borrar atributo raw.orders.profit</span>
+<span class="s0">ALTER TABLE </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders </span><span class="s0">DROP COLUMN </span><span class="s1">profit;</span>
+
+<span class="s3">/* 
+SELECT * 
+FROM raw.orders; 
+ 
+SELECT * 
+FROM norm.order_product;*/</span>
+
+
+<span class="s0">DROP TABLE IF EXISTS </span><span class="s1">&quot;raw&quot;</span><span class="s2">.</span><span class="s1">orders;</span>
+
+
+<span class="s3">/* 
+SELECT * 
+FROM norm.customer; 
+ 
+SELECT * 
+FROM norm.product; 
+ 
+SELECT * 
+FROM norm.geography; 
+ 
+SELECT * 
+FROM norm.&quot;order&quot;; 
+ 
+SELECT * 
+FROM norm.order_product; 
+*/</span></pre>
+</body>
+</html>
