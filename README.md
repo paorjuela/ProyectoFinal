@@ -102,7 +102,7 @@ Finalmente, ejecutamos el siguiente comando en una sesión de línea de comandos
 
 ## Análisis Preliminar
 
-> **Nota:** Todas las consultas utilizadas para este análisis preliminar están en el archivo [analisis_preliminar]. Cada consulta está clasificada y nombrada según la observación.
+> **Nota:** Todas las consultas utilizadas para este análisis preliminar están en el archivo [analisis_preliminar.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/limpieza-datos/analisis_preliminar.sql). Cada consulta está clasificada y nombrada según la observación.
 
 Lo primero que se puede observar es que la columna de `postal_code` esta conformada por más de 40k `null`, lo que supone un 80% de las tuplas del data set. Así, podemos clasificas a esta columna como redundante y no aportaría información alguna a un análisis más profundo.
 Consulta `1` en `analisis_preliminar`.
