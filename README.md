@@ -102,6 +102,29 @@ Finalmente, ejecutamos el siguiente comando en una sesión de línea de comandos
 
 ## Análisis Preliminar
 
-Lo primero qur se puede observar es que la columna de "postal_code" está conformada (en su mayoría) por atributos `null`. Por lo que la columna es redundante y no aportaría información alguna a un análisis más profundo.
+> **Nota:** Todas las consultas utilizadas para este análisis preliminar están en el archivo [analisis_preliminar]. Cada consulta está clasificada y nombrada según la observación.
 
-Además, 
+Lo primero que se puede observar es que la columna de `postal_code` esta conformada por más de 40k `null`, lo que supone un 80% de las tuplas del data set. Así, podemos clasificas a esta columna como redundante y no aportaría información alguna a un análisis más profundo.
+Consulta `1` en `analisis_preliminar`.
+
+A través de los máximos y mínimos de las fechas `order_date` y `ship_date` podemos confirmar que el data set abarca un periodo de entre el 1 de enero del 2011 (primera orden) y el 7 de enero del 2015 (último envío).
+Consulta `2` en `analisis_preliminar`.
+
+Lo primero que notamos al analisar las ganancias y los costos es la falta de una moneda como forma de medida. Para efectos de facilitar el análisis (y porque es la moneda más probable) vamos a suponer que los precios están en dólares.
+
+Así, podemos observar (a través de las columnas `sales`, `profit` y `shipping_cost`) que las ventas totales, la ganancia total y el costo de envio total es de 12,642,507.25$, 1,467,456.55$ y 1,352,820.69$ respectivamente. La razón por la que no se puede analisar el promedio por orden es por un error en los datos del que hablaré al final.
+Consulta `3` en `analisis_preliminar`.
+
+Además, el total de productos vendidos (a través de la columna `quantity`) es de 178,312 productos. En cuanto el promedio por orden, no se puede calcular por el mismo error del que hablé antes.
+Consulta `4` en `analisis_preliminar`.
+
+En cuanto a atributos categóricos, hay varios, pero los interesantes son `category`, `order_priority`, `ship_mode` y `segment`:
+- Hay tres tipos de productos: muebles, insumos de oficina y tacnología.
+- Hay cuatro niveles de prioridad por orden: bajo, medio, alto y crítico.
+- Hay cuatro modos de envío: clase estandar, segunda clase, primera clase y mismo día.
+- Hay tres tipos de clientes: consumidor, corporativo y _home office_.
+
+Consulta `5` en `analisis_preliminar`.
+
+Por último, están los valores únicos: `order_id`, `product_id` y `customer_id`. Aquí es donde se presenta el problema (del que hable antes) más grande del data set. A pesar de ser _id's_, no determinan funcionalmente los atributos que representan. `customer_id` es el único que no presenta problemas. `product_id` tiene más de 500 tuplas donde el _id_ es el mismo, pero el nombre del producto es diferente (y una con una sub categoría). El peor, sin embargo, es `order_id` donde presenta problemas en multiples atributos, principalmente en  `order_date` y `customer_id`, donde más de 780 tuplas aparecen con el mismo _id_ pero fecha o cliente diferente. Da la impresión de que son ordenes completamente diferentes, pero asignadas al mismo _id_ por algún error. Este problema se resuelve durante el proceso de normalización de los datos.
+Consulta `6` en `analisis_preliminar`.
