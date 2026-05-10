@@ -98,3 +98,10 @@ Finalmente, ejecutamos el siguiente comando en una sesión de línea de comandos
 ```{psql}
 \copy raw.orders FROM 'ruta_csv' WITH (FORMAT CSV, HEADER true, DELIMITER ',');
 ```
+
+
+## Análisis Preliminar
+
+Lo primero qur se puede observar es que la columna de "postal_code" está conformada (en su mayoría) por atributos `null`. Por lo que la columna es redundante y no aportaría información alguna a un análisis más profundo.
+
+Además, 
