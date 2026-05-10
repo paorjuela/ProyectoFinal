@@ -179,4 +179,4 @@ $$E_{customer}=\text{customer-id', customer-name, segment}$$
 $$E_{product}=\text{product-id', product-name, category, sub-category}$$
 $$E_{order-product}=\text{order-product-id', order-id', product-id', shipping-cost, ship-date, ship-mode, sales, cuantity, discount, profit}$$
 
-El esquema_erd que representa estas $\text{Relvars}$ está en []()
+El esquema_erd que representa estas $\text{Relvars}$ está en [esquema_erd_fnbc.jpeg](https://github.com/paorjuela/analisis-comercio-electronico/blob/normalizacion-tablas/esquema_erd_fnbc.jpeg).
