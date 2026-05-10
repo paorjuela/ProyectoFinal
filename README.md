@@ -132,6 +132,6 @@ Consulta `6` en `analisis_preliminar`.
 
 ## Limpieza de datos
 
-Gracias al análisis preliminar, se puede observar que el data set está en su mayoría limpio. Sin embargo, es cierto que presenta dos columnas redudantes (`row_id` y `postal_code`), las cuales podemos eliminar sin perdida de datos relevantes para el análisis futuro. En cuanto el problema con los _id's_, eso se va a resolver durante el proceso de normalización.
+Gracias al análisis preliminar, se puede observar que el data set está en su mayoría limpio. Sin embargo, es cierto que presenta dos columnas redudantes (`row_id` y `postal_code`), las cuales podemos eliminar sin perdida de datos relevantes para el análisis futuro. En cuanto el problema con los _id's_, eso se va a resolver durante el proceso de normalización (donde sustituiremos los _id's_ originales con los artificiales generados al separar las tablas).
 
-El código para limpiar el data set esta en [limpieza.sql]()
+El código para limpiar el data set esta en [limpieza.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/limpieza-datos/limpieza.sql).
