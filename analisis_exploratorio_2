@@ -1,0 +1,217 @@
+--Análisis exploratorio
+-- Ejecutar después de raw_data_scheme_creation.sql
+
+--1. Conteo general de tuplas y atrbutos
+-- Total de regsitros en la tabla raw
+SELECT COUNT(*) AS total_registros
+FROM orders;
+
+-- checar que el row_id es verdaderamente único
+SELECT COUNT(*) AS total,
+        COUNT(DISTINCT row_id) AS unicos_row_id
+FROM orders;
+
+--  Valores únicos por columna categórica 
+SELECT COUNT(DISTINCT order_id) AS ordenes_unicas
+FROM orders;
+
+SELECT COUNT(DISTINCT customer_id) AS clientes_unicos
+FROM orders;
+
+SELECT COUNT(DISTINCT product_id) AS productos_unicos 
+FROM orders;
+
+SELECT COUNT(DISTINCT country) AS paises_unicos
+FROM orders;
+
+SELECT COUNT(DISTINCT city) AS ciudades_unicas
+FROM orders;
+
+SELECT COUNT(DISTINCT market) AS mercados_unicos
+FROM orders;
+
+SELECT COUNT(DISTINCT region) AS regiones_unicas
+FROM orders;
+
+SELECT COUNT(DISTINCT segment) AS segmento
+FROM orders;
+
+SELECT COUNT(DISTINCT ship_mode) AS modos_de_envio
+FROM orders;
+
+SELECT COUNT(DISTINCT category) AS categorias
+FROM orders;
+
+SELECT COUNT(DISTINCT sub_categories) AS sub_categorias
+FROM orders;
+
+SELECT COUNT(DISTINCT order_priority) AS prioridades
+FROM orders;
+
+-- 3. Valores categóricos distintos
+
+-- Mercados disponibles 
+SELECT DISTINCT market 
+FROM orders
+ORDER BY market;
+
+-- Regiones discponibles 
+SELECT DISTINCT region 
+FROM orders 
+ORDER BY region;
+
+-- Segmentos de clientes
+SELECT DISTINCT segment 
+FROM orders 
+ORDER BY segment;
+
+-- Modos de envío
+SELECT DISTINCT ship_mode 
+FROM orders 
+ORDER BY ship_mode;
+
+-- Categorías y subcategorías de productos
+SELECT DISTINCT category,sub_category 
+FROM orders 
+ORDER BY category, sub_category;
+
+-- Prioridades de orden
+SELECT DISTINCT order_priority 
+FROM orders 
+ORDER BY order_priority;
+
+-- 4. Mínimos y Máximos de fechas
+
+SELECT 
+    MIN(order_date) AS fecha_de_orden_min,
+    MAX(order_date) AS fecha_orden_max,
+    MIN(ship_date) AS fecha_envio_min,
+    MAX(ship_date) AS fecha_envio_max,
+    MAX(order_date) - MIN(order_date) AS rango_dias
+FROM orders;
+
+-- 5. Estadísticas de columnas numéricas
+
+SELECT 
+    -- Sales
+      ROUND(MIN(sales):: numeric,2) AS min_sales,
+      ROUND(MAX(sales):: numeric,2) AS max_sales,
+      ROUND(AVG(sales):: numeric,2) AS avg_sales,
+    -- profit
+      ROUND(MIN(profit):: numeric, 2) AS min_profit,
+      ROUND(MAX(profit):: numeric, 2) AS max_profit,
+      ROUND(AVG(profit):: numeric,2) AS avg_profit,
+   -- Discount
+      ROUND(MIN(discount):: numeric,2) AS min_discount,
+      ROUND(MAX(discount):: numeric,2) AS max_discount,
+      ROUND(AVG(discount):: numeric,2) AS avg_discount,
+    -- Quantity
+      MIN(quantity) AS min_quantity,
+      MAX(quantity) AS max_quantity,
+      ROUND(AVG(quantity):: numeric,2) AS avg_quantity,
+ -- Shipping cost
+      ROUND(MIN(shipping_cost):: numeric, 2) AS min_shipping_cost,
+      ROUND(MAX(shipping_cost):: numeric, 2) AS max_shipping_cost,
+      ROUND(AVG(shipping_cost):: numeric,2) AS avg_shipping_cost
+FROM orders;
+
+-- 6. Conteo de valores nulos por columna 
+SELECT
+    COUNT(*) FILTER (WHERE row_id        IS NULL) AS nulos_row_id,
+    COUNT(*) FILTER (WHERE order_id      IS NULL) AS nulos_order_id,
+    COUNT(*) FILTER (WHERE order_date    IS NULL) AS nulos_order_date,
+    COUNT(*) FILTER (WHERE ship_date     IS NULL) AS nulos_ship_date,
+    COUNT(*) FILTER (WHERE ship_mode     IS NULL) AS nulos_ship_mode,
+    COUNT(*) FILTER (WHERE customer_id   IS NULL) AS nulos_customer_id,
+    COUNT(*) FILTER (WHERE customer_name IS NULL) AS nulos_customer_name,
+    COUNT(*) FILTER (WHERE segment       IS NULL) AS nulos_segment,
+    COUNT(*) FILTER (WHERE city          IS NULL) AS nulos_city,
+    COUNT(*) FILTER (WHERE state         IS NULL) AS nulos_state,
+    COUNT(*) FILTER (WHERE country       IS NULL) AS nulos_country,
+    COUNT(*) FILTER (WHERE postal_code   IS NULL) AS nulos_postal_code,
+    COUNT(*) FILTER (WHERE market        IS NULL) AS nulos_market,
+    COUNT(*) FILTER (WHERE region        IS NULL) AS nulos_region,
+    COUNT(*) FILTER (WHERE product_id    IS NULL) AS nulos_product_id,
+    COUNT(*) FILTER (WHERE category      IS NULL) AS nulos_category,
+    COUNT(*) FILTER (WHERE sub_category  IS NULL) AS nulos_sub_category,
+    COUNT(*) FILTER (WHERE product_name  IS NULL) AS nulos_product_name,
+    COUNT(*) FILTER (WHERE sales         IS NULL) AS nulos_sales,
+    COUNT(*) FILTER (WHERE quantity      IS NULL) AS nulos_quantity,
+    COUNT(*) FILTER (WHERE discount      IS NULL) AS nulos_discount,
+    COUNT(*) FILTER (WHERE profit        IS NULL) AS nulos_profit,
+    COUNT(*) FILTER (WHERE shipping_cost IS NULL) AS nulos_shipping_cost,
+    COUNT(*) FILTER (WHERE order_priority IS NULL) AS nulos_order_priority
+FROM orders;
+
+
+-- 7. Duplicados en product_id
+
+-- Productos con el mismo ID pero diferente nombre o categoría
+SELECT product_id, COUNT(DISTINCT product_name) AS nombres_distintos
+FROM orders
+GROUP BY product_id
+HAVING COUNT(DISTINCT product_name) > 1
+ORDER BY nombres_distintos DESC
+LIMIT 20;
+
+-- Cuántos product_ids tienen más de un nombre
+SELECT COUNT(*) AS product_ids_con_duplicados
+FROM (
+    SELECT product_id
+    FROM orders
+    GROUP BY product_id
+    HAVING COUNT(DISTINCT product_name) > 1
+) sub;
+
+-- 8. Conteo de registros por categoría
+
+-- Por mercado
+SELECT market, COUNT(*) AS num_transacciones
+FROM orders
+GROUP BY market
+ORDER BY num_transacciones DESC;
+
+-- Por segmento
+SELECT segment, COUNT(*) AS num_transacciones
+FROM orders
+GROUP BY segment
+ORDER BY num_transacciones DESC;
+
+-- Por categoría de producto
+SELECT category, COUNT(*) AS num_transacciones
+FROM orders
+GROUP BY category
+ORDER BY num_transacciones DESC;
+
+-- Por prioridad
+SELECT order_priority, COUNT(*) AS num_ordenes
+FROM orders
+GROUP BY order_priority
+ORDER BY num_ordenes DESC;
+
+
+-- 9. Inconsistencias: ship_date < order_date
+SELECT COUNT(*) AS envios_antes_de_orden
+FROM orders
+WHERE ship_date < order_date;
+
+
+-- 10. Columnas potencialmente redundantes
+
+-- Verificar si market y region son redundantes entre sí
+SELECT market, region, COUNT(*) AS frecuencia
+FROM orders
+GROUP BY market, region
+ORDER BY market, region;
+
+-- Verificar si un mismo customer_id siempre tiene el mismo segment
+SELECT customer_id, COUNT(DISTINCT segment) AS segmentos_por_cliente
+FROM orders
+GROUP BY customer_id
+HAVING COUNT(DISTINCT segment) > 1;
+
+-- Verificar si un mismo customer_id siempre tiene el mismo customer_name
+SELECT customer_id, COUNT(DISTINCT customer_name) AS nombres_por_id
+FROM orders
+GROUP BY customer_id
+HAVING COUNT(DISTINCT customer_name) > 1;
