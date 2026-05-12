@@ -64,6 +64,13 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
 
 ```
 ├── README.md                                         <- Documentación para desarrolladores de este proyecto (i.e., reporte escrito)
+├── .gitignore
+├── scripts                                           <- Scripts de SQL para ejecución del pipeline de datos
+│   ├── raw_data_scheme_creation.sql                  <- Script de carga inicial
+│   ├── analisis_preliminar.sql                       <- 
+│   ├── limpieza_y_normalizacion.sql                  <- Script de limpieza de datos y normalización de relaciones
+│   └── creacion_atributos_analiticos.sql             <- Script de creación de atributos analíticos
+├── ERD.png                                           <- Entity-Relationship Diagram
 
 ```
 
@@ -78,8 +85,7 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
 
 ## Carga inicial
 
-En primer lugar, se deberá crear una base de datos exclusiva para este proyecto. Para ello se puede ejecutar el siguiente 
-comando en `psql`:
+En primer lugar, se deberá crear una base de datos exclusiva para este proyecto. Para ello se puede ejecutar el siguiente comando en `psql`:
 
 ```{psql}
 CREATE DATABASE comercio_electronico;
@@ -102,49 +108,44 @@ Finalmente, ejecutamos el siguiente comando en una sesión de línea de comandos
 
 ## Análisis Preliminar
 
-> **Nota:** Todas las consultas utilizadas para este análisis preliminar están en el archivo [analisis_preliminar.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/limpieza-datos/analisis_preliminar.sql). Cada consulta está clasificada y nombrada según la observación.
+> **Nota:** Todas las consultas ejecutadas para este análisis se encuentran en el archivo [analisis_preliminar.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/limpieza-datos/analisis_preliminar.sql). Cada consulta está clasificada y nombrada según la observación correspondiente.
 
-Lo primero que se puede observar es que la columna de `postal_code` está conformada por más de 40k `null`, lo que supone un 80% de las tuplas del data set. Así, podemos clasificar esta columna como redundante y no aportaría información alguna a un análisis más profundo.
-Consulta `1` en `analisis_preliminar`.
+### Consulta `1` en `analisis_preliminar`
+Se identificó que la columna `postal_code` contiene más de 40,000 valores `null`, lo que representa aproximadamente el 80% de las tuplas del dataset. Debido a esta falta de representatividad, clasificamos esta columna como redundante, ya que no aporta información relevante para un análisis más profundo.
 
-A través de los máximos y mínimos de las fechas `order_date` y `ship_date` podemos confirmar que el data set abarca un periodo de entre el 1 de enero del 2011 (primera orden) y el 7 de enero de 2015 (último envío).
-Consulta `2` en `analisis_preliminar`.
+### Consulta `2` en `analisis_preliminar`
+A través del análisis de los valores máximos y mínimos en `order_date` y `ship_date`, sabemos que el dataset abarca un periodo de entre el 1 de enero de 2011 (primera orden) y el 7 de enero de 2015 (último envío registrado).
 
-Lo primero que notamos al analizar las ganancias y los costos es la falta de una moneda como forma de medida. Para efectos de facilitar el análisis (y porque es la moneda más probable) vamos a suponer que los precios están en dólares.
+### Consultas `3` y `4` en `analisis_preliminar`
+Ante la ausencia de una unidad de medida explícita en las columnas de costos y ganancias, se ha tomado el supuesto de que los montos están expresados en dólares (USD) para facilitar la interpretación de los resultados.
+* Ventas totales: $12,642,507.25
+* Ganancia total: $1,467,456.55
+* Costo de envío total: $1,352,820.69
+* Volumen de productos vendidos: 178,312 unidades.
+> **Nota:** Debido a inconsistencias en la estructura de las claves primarias (detalladas en el punto 5), no es posible calcular promedios precisos por orden de compra en esta etapa.
 
-Así, podemos observar (a través de las columnas `sales`, `profit` y `shipping_cost`) que las ventas totales, la ganancia total y el costo de envío total son de 12,642,507.25$, 1,467,456.55$ y 1,352,820.69$ respectivamente. La razón por la que no se puede analizar el promedio por orden es por un error en los datos de los que hablaré al final.
-Consulta `3` en `analisis_preliminar`.
-
-Además, el total de productos vendidos (a través de la columna `quantity`) es de 178,312 productos. En cuanto el promedio por orden, no se puede calcular por el mismo error del que hablé antes.
-Consulta `4` en `analisis_preliminar`.
-
+### Consulta `5` en `analisis_preliminar`
 En cuanto a atributos categóricos, hay varios, pero los interesantes son `category`, `order_priority`, `ship_mode` y `segment`:
 - Hay tres tipos de productos: muebles, insumos de oficina y tecnología.
 - Hay cuatro niveles de prioridad por orden: bajo, medio, alto y crítico.
 - Hay cuatro modos de envío: clase estándar, segunda clase, primera clase y mismo día.
 - Hay tres tipos de clientes: consumidor, corporativo y _home office_.
 
-Consulta `5` en `analisis_preliminar`.
-
+### Consulta `6` en `analisis_preliminar`
 Por último, están los valores únicos: `order_id`, `product_id` y `customer_id`. Aquí es donde se presenta el problema (del que hablé antes) más grande del data set. A pesar de ser _id's_, no determinan funcionalmente los atributos que representan. `customer_id` es el único que no presenta problemas. `product_id` tiene más de 500 tuplas donde el _id_ es el mismo, pero el nombre del producto es diferente (y una con una subcategoría). El peor, sin embargo, es `order_id` donde presenta problemas en múltiples atributos, principalmente en  `order_date` y `customer_id`, donde más de 780 tuplas aparecen con el mismo _id_ pero fecha o cliente diferente. Da la impresión de que son órdenes completamente diferentes, pero asignadas al mismo _id_ por algún error.
-Consulta `6` en `analisis_preliminar`.
 
 
-## Limpieza de datos
+## Limpieza de datos y normalización de tablas
+El script para estas operaciones se encuentra en [limpieza-y-normalizacion.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/limpieza-datos/analisis_preliminar.sql).
 
-Gracias al análisis preliminar, se puede observar que el data set está en su mayoría limpio. Sin embargo, es cierto que presenta dos columnas redundantes (`row_id` y `postal_code`), las cuales podemos eliminar sin pérdida de datos relevantes para el análisis futuro. En cuanto el problema con los _id's_, eso se va a resolver durante el proceso de normalización (donde sustituiremos los _id's_ originales con los artificiales generados al separar las tablas).
+Tras el análisis preliminar, se identificaron dos columnas redundantes, `row_id` y `postal_code`, cuya eliminación no supone una pérdida de información relevante. El problema detectado con la duplicidad de IDs (donde un mismo ID puede referirse a entidades distintas) se resuelve durante la normalización mediante la generación de claves artificiales.
 
-El código para limpiar el data set está en [limpieza.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/limpieza-datos/limpieza.sql).
+A continuación, se describe el proceso de normalización.
 
-
-## Normalización de tablas
-
-El conjunto de atributos del dataset es:
-
+El dataset tiene los siguientes atributos:
 $E=\{\text{order-id, customer-id, order-date, city, state, country, market, region, order-priority, customer-name, segment, product-id, category, sub-category, product-name, ship-date, ship-mode, shipping-cost, sales, quantity, discount, profit}\}$
 
 ### Dependencias funcionales
-
 Lo primero que uno haría intuitivamente es asumir que los _id's_ identifican de forma única a cada entidad, por lo que las $\text{DF}$ "ideales" serían:
  
 $$\{\text{order-id}\}\rightarrow\{\text{customer-id, order-date, city, state, country, market, region, order-priority}\}$$
@@ -154,40 +155,35 @@ $$\{\text{order-id, product-id}\}\rightarrow\{\text{ship-date, ship-mode, shippi
  
 El problema es que ninguna de las dos primeras se cumple realmente en el dataset. Como se vio en el **análisis preliminar**, el mismo `order-id` puede corresponder a clientes distintos, y el mismo `product-id` puede corresponder a productos distintos.
 
-Para encontrar $\text{DF}$ que sí se sostengan, hay que mover atributos al lado izquierdo hasta tener algo que funcione como superclave real:
-
+Para encontrar $\text{DF}$ que sí se sostengan, hay que mover atributos al lado izquierdo hasta tener algo que funcione como super llave:
 $$\{\text{order-id, customer-id, order-date}\}\rightarrow\{\text{city, state, country, market, region, order-priority}\}$$
 $$\{\text{customer-id}\}\rightarrow\{\text{customer-name, segment}\}$$
 $$\{\text{product-id, product-name}\}\rightarrow\{\text{category, sub-category}\}$$
-$$\{\text{order-id, customer-id, order-date, product-id, product-name}\}\rightarrow\{\text{ship-date, ship-mode, , shipping-cost, sales, quantity, discount, profit}\}$$
+$$\{\text{order-id, customer-id, order-date, product-id, product-name}\}\rightarrow\{\text{ship-date, ship-mode, shipping-cost, sales, quantity, discount, profit}\}$$
 
-Sin embargo, al verificar la primera contra el dataset aparece otro problema:
-$\{\text{city, state, country}\}\rightarrow\{\text{market, region}\}$
-es una $\text{DF}$ que vive dentro de $E_{order}$, y como $\{\text{city, state, country}\}$ no es superclave de esa relvar, esto viola la **FNBC**.
+Sin embargo, al verificar la primera contra el dataset aparece otro problema: $\{\text{city, state, country}\}\rightarrow\{\text{market, region}\}$ es una $\text{DF}$ que vive dentro de $E_{order}$, y como $\{\text{city, state, country}\}$ no es super llave de esa relvar, esto viola la **FNBC**.
 
 Además, se encontraron 348 filas de Austria y Mongolia con clasificaciones de mercado inconsistentes (`EU`/`EMEA` y `APAC`/`EMEA` respectivamente), que corresponden a un error de captura en el dataset original. Para corregirlo se conservó el valor mayoritario por ciudad.
 
-El conjunto de $\text{DF}$ que finalmente se verifican en el dataset es:
+El conjunto de $\text{DF}$ que finalmente se verifica en el dataset es:
 $$\{\text{order-id, customer-id, order-date}\}\rightarrow\{\text{city, state, country, order-priority}\}$$
 $$\{\text{city, state, country}\}\rightarrow\{\text{market, region}\}$$
 $$\{\text{customer-id}\}\rightarrow\{\text{customer-name, segment}\}$$
 $$\{\text{product-id, product-name}\}\rightarrow\{\text{category, sub-category}\}$$
-$$\{\text{order-id, customer-id, order-date, product-id, product-name}\}\rightarrow\{\text{ship-date, ship-mode, shipping-cost, sales, cuantity, discount, profit}\}$$
+$$\{\text{order-id, customer-id, order-date, product-id, product-name}\}\rightarrow\{\text{ship-date, ship-mode, shipping-cost, sales, quantity, discount, profit}\}$$
 
 
 ### Forma normal Boyce-Codd (FNBC)
 Cada $\text{DF}$ da lugar a una relvar distinta, por lo que $E$ se descompone en **cinco** $\text{Relvars}$:
-
 $$E_{customer}=\text{customer-id, customer-name, segment}$$
 $$E_{product}=\text{product-id, product-name, category, sub-category}$$
 $$E_{order}=\text{order-id, customer-id, order-date, city, state, country, order-priority}$$
 $$E_{geography}=\text{city, state, country, market, region}$$
 $$E_{order\text{-}product}=\text{order-id, customer-id, order-date, product-id, product-name, ship-date, ship-mode, shipping-cost, sales, quantity, discount, profit}$$
 
-En cada una de estas relvars el lado izquierdo de su $\text{DF}$ es superclave, así que la descomposición cumple la **FNBC**.
+En cada una de estas relvars, el lado izquierdo de su $\text{DF}$ es superclave, así, la descomposición cumple la **FNBC**.
  
-Para implementarlo en SQL, las claves naturales se reemplazan por ids artificiales (`BIGSERIAL`):
- 
+Para implementarlo en SQL, las claves naturales se reemplazan por ids artificiales (`BIGSERIAL`): 
 | Clave natural | Identificador artificial |
 |---|---|
 | `customer-id` | `customer-id'` |
@@ -197,23 +193,16 @@ Para implementarlo en SQL, las claves naturales se reemplazan por ids artificial
 | `(order-id', product-id')` | `order-product-id'` |
  
 Con esto, los encabezados finales quedan:
- 
 $$E_{customer}=\text{customer-id', customer-name, segment}$$
- 
 $$E_{product}=\text{product-id', category, sub-category}$$
- 
 $$E_{geography}=\text{geography-id', market, region}$$
- 
 $$E_{order}=\text{order-id', customer-id', geography-id', order-priority}$$
- 
 $$E_{order\text{-}product}=\text{order-product-id', order-id', product-id', ship-date, ship-mode, shipping-cost, sales, quantity, discount, profit}$$
 
 ### Implementación SQL
- 
 El script de normalización parte de la tabla `raw.orders` y construye el esquema `norm` tabla por tabla. El patrón que se repite en cada bloque es siempre el mismo: crear la nueva tabla, poblarla con los valores únicos de `raw.orders`, agregar una columna auxiliar `*_id_alt` en `raw.orders` que apunte al nuevo `id` generado, actualizar esa columna con un `UPDATE` y, finalmente, eliminar las columnas que ya migraron. A continuación se explican las operaciones no triviales.
  
 #### `SELECT DISTINCT`
- 
 ```sql
 INSERT INTO norm.customer (customer_id, customer_name, segment)
     SELECT DISTINCT customer_id, customer_name, segment
@@ -266,6 +255,5 @@ Después de que `raw.orders` ya apunta al `id` artificial, el `customer_id` de t
  
 ---
 
-El esquema erd que representa estas $\text{Relvars}$ en forma de tablas está en [esquema_erd_fnbc.jpeg](https://github.com/paorjuela/analisis-comercio-electronico/blob/normalizacion-tablas/esquema_erd_fnbc.jpeg).
+El esquema ERD que representa estas $\text{Relvars}$ en forma de tablas está en [esquema_erd_fnbc.jpeg](https://github.com/paorjuela/analisis-comercio-electronico/blob/normalizacion-tablas/esquema_erd_fnbc.jpeg).
 
-El codigo para crear las tablas (en FNBC) y eliminar los datos en forma bruta está en [codigo_fnbc.sql](https://github.com/paorjuela/analisis-comercio-electronico/blob/normalizacion-tablas/codigo_fnbc.sql).
