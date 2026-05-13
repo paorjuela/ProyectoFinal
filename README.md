@@ -245,8 +245,169 @@ ALTER TABLE norm.customer DROP COLUMN customer_id;
 Después de que `raw.orders` ya apunta al `id` artificial, el `customer_id` de texto en `norm.customer` deja de ser necesario como columna, pues su función era servir de puente durante la migración. Eliminarlo evita redundancia y deja la tabla con únicamente los atributos que le corresponden según la $\text{DF}$.
  
 ---
-Después de ejecutar el script [limpieza-y-normalizacion.sql](/scripts/limpieza_y_normalizacion.sql), se tiene:
+Después de ejecutar el script [limpieza-y-normalizacion.sql](/scripts/limpieza_y_normalizacion.sql), se tiene el esquema `norm`:
 
 ![ERD](/ERD.png)
 
 ## Atributos analíticos
+> El código de esta sección se encuentra en [creacion_atributos_analiticos.sql](/scripts/creacion_atributos_analiticos.sql).
+
+El objetivo de este análisis es identificar patrones de rentabilidad, comportamiento de clientes y eficiencia logística a partir de los datos normalizados. Para ello se construyeron atributos enriquecidos mediante agrupaciones, filtros, composiciones y funciones de ventana sobre el esquema `norm`.
+
+---
+
+### 1. Tendencia anual de ventas y rentabilidad
+ 
+La primera pregunta que nos hacemos es si el negocio está creciendo y si ese crecimiento es rentable.
+ 
+| Año | Órdenes | Ventas totales | Ganancia total | Margen |
+|---|---|---|---|---|
+| 2011 | 4,516 | $2,259,451.64 | $248,940.41 | 11.02% |
+| 2012 | 5,480 | $2,677,439.91 | $307,415.3 | 11.48% |
+| 2013 | 6,890 | $3,405,748.03 | $406,934.84 | 11.95% |
+| 2014 | 8,868 | $4,299,867.67 | $504,166 | 11.73% |
+ 
+**Hallazgo:** Las ventas crecieron un 90% entre 2011 y 2014, y el volumen de órdenes casi se duplicó. El margen se mantuvo estable alrededor del 11–12%, lo que indica que el crecimiento no se logró a costa de la rentabilidad. La leve caída de margen en 2014 (11.95% → 11.73%) podría ser señal de presión competitiva o de mayor uso de descuentos.
+ 
+---
+
+### 2. Rentabilidad por subcategoría
+ 
+Para decidir en qué productos enfocarse (o dejar de invertir), calculamos el margen por subcategoría.
+ 
+| Categoría | Subcategoría | Pedidos | Ventas | Ganancia | Margen (%) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| Office Supplies | Paper | 3,238 | $244,291.85 | $59,207.25 | 24.24% |
+| Office Supplies | Labels | 2,465 | $73,404.31 | $15,010.35 | 20.45% |
+| Office Supplies | Envelopes | 2,318 | $170,904.37 | $29,600.85 | 17.32% |
+| Technology | Accessories | 2,893 | $749,237.28 | $129,626.44 | 17.30% |
+| Technology | Copiers | 2,125 | $1,509,436.51 | $258,567.62 | 17.13% |
+| Office Supplies | Binders | 5,438 | $461,912.20 | $72,449.60 | 15.68% |
+| Office Supplies | Art | 4,411 | $372,092.52 | $57,953.92 | 15.58% |
+| Office Supplies | Appliances | 1,689 | $1,011,064.54 | $141,680.65 | 14.01% |
+| Office Supplies | Fasteners | 2,307 | $83,242.47 | $11,525.25 | 13.85% |
+| Technology | Phones | 3,141 | $1,706,824.65 | $216,717.49 | 12.70% |
+| Furniture | Furnishings | 2,971 | $385,578.44 | $46,967.55 | 12.18% |
+| Furniture | Bookcases | 2,285 | $1,466,572.55 | $161,924.32 | 11.04% |
+| Office Supplies | Storage | 4,574 | $1,127,086.68 | $108,461.74 | 9.62% |
+| Furniture | Chairs | 3,199 | $1,501,682.16 | $140,396.24 | 9.35% |
+| Office Supplies | Supplies | 2,292 | $243,074.23 | $22,583.13 | 9.29% |
+| Technology | Machines | 1,426 | $779,060.32 | $58,867.70 | 7.56% |
+| Furniture | Tables | 836 | $757,042.17 | -$64,083.55 | -8.46% |
+ 
+**Hallazgo:** `Tables` es la única subcategoría con margen **negativo** (-8.46%), generando pérdidas de $64K sobre $757K en ventas. Por el otro lado, `Paper`, `Labels` y `Copiers` son las subcategorías más rentables. En la categoría `Technology`, sus subcategorías `Copiers` y `Accessories` son muy rentables, mientras que `Machines` apenas supera el 7%.
+ 
+---
+ 
+### 3. Rentabilidad por región
+ 
+¿Dónde está el dinero geográficamente?
+ 
+| Mercado | Región | Pedidos | Ventas Totales | Ganancia Total | Margen (%) |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| EU | Central | 2,995 | $1,731,871.47 | $218,416.90 | 12.61% |
+| APAC | Oceania | 1,744 | $1,100,185.69 | $120,089.63 | 10.92% |
+| APAC | Southeast Asia | 1,517 | $884,423.95 | $17,852.36 | 2.02% |
+| APAC | North Asia | 1,149 | $848,269.78 | $165,595.18 | 19.52% |
+| EMEA | EMEA | 2,511 | $794,884.11 | $40,997.74 | 5.16% |
+| Africa | Africa | 2,289 | $783,773.37 | $88,871.13 | 11.34% |
+| APAC | Central Asia | 1,026 | $752,826.94 | $132,479.89 | 17.60% |
+| US | West | 1,611 | $725,457.93 | $108,418.79 | 14.94% |
+| US | East | 1,401 | $678,781.36 | $91,522.84 | 13.48% |
+| EU | North | 1,107 | $625,575.75 | $91,779.15 | 14.67% |
+| LATAM | North | 1,329 | $622,590.78 | $102,818.26 | 16.51% |
+| LATAM | South | 1,460 | $617,223.64 | $28,090.48 | 4.55% |
+| LATAM | Central | 1,504 | $600,510.01 | $56,163.55 | 9.35% |
+| EU | South | 1,053 | $591,961.63 | $65,515.75 | 11.07% |
+| US | Central | 1,175 | $501,239.88 | $39,706.45 | 7.92% |
+| US | South | 822 | $391,721.90 | $46,749.71 | 11.93% |
+| LATAM | Caribbean | 856 | $324,280.89 | $34,571.35 | 10.66% |
+| Canada | Canada | 205 | $66,928.17 | $17,817.39 | 26.62% |
+ 
+**Hallazgo:** EU Central es el mercado más grande en ventas, pero no el más rentable. Canada tiene el margen más alto (26.62%), aunque con un volumen muy pequeño. APAC North Asia y Central Asia combinan volumen considerable con márgenes superiores al 17%, lo que los posiciona como mercados clave de crecimiento. EMEA y LATAM South son los de menor rentabilidad proporcional, lo que sugiere revisar la estrategia de precios o descuentos en esas regiones.
+ 
+---
+ 
+### 4. Rentabilidad por segmento de cliente
+ 
+| Segmento | Pedidos | Ventas Totales | Ganancia Total | Margen (%) | Ticket Promedio |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Home Office | 4,717 | $2,309,855.98 | $277,009.28 | 11.99% | $489.69 |
+| Corporate | 7,732 | $3,824,698.96 | $441,208.09 | 11.54% | $494.66 |
+| Consumer | 13,305 | $6,507,952.31 | $749,239.18 | 11.51% | $489.14 |
+ 
+**Hallazgo:** Los tres segmentos tienen márgenes prácticamente idénticos (~11.5–12%), lo que indica que la estrategia de precios es consistente entre tipos de cliente. El segmento `Consumer` domina en volumen (más del doble de órdenes que `Corporate`), pero `Home Office` logra el margen marginalmente más alto. El ticket promedio es casi igual en los tres, lo que sugiere que no hay diferenciación real de precios por segmento.
+ 
+---
+ 
+### 5. Clientes más valiosos (por ganancia generada)
+ 
+Identificar a los clientes más valiosos para estrategias de retención.
+ 
+| ID Cliente | Segmento | Pedidos | Ventas Totales | Ganancia Total | Rank en Segmento |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| 108 | Corporate | 28 | $34,218.28 | $8,787.48 | 1 |
+| 285 | Consumer | 25 | $29,197.65 | $8,523.95 | 1 |
+| 1292 | Consumer | 28 | $25,602.62 | $8,106.22 | 2 |
+| 427 | Home Office | 37 | $27,158.02 | $7,790.71 | 1 |
+| 629 | Consumer | 20 | $29,664.26 | $7,657.50 | 3 |
+| 656 | Consumer | 33 | $22,966.79 | $6,912.60 | 4 |
+| 1585 | Consumer | 28 | $28,124.21 | $6,649.63 | 5 |
+| 753 | Corporate | 37 | $27,434.18 | $6,544.86 | 2 |
+| 1482 | Home Office | 25 | $35,668.14 | $6,275.02 | 2 |
+| 1104 | Consumer | 36 | $29,532.63 | $5,863.62 | 6 |
+ 
+**Hallazgo:** Algunos clientes tienen márgenes superiores al 50%, lo que sugiere que compran productos de alto margen con pocos descuentos. 
+ 
+---
+
+### 6. Clientes que dejan mayores pérdidas
+
+En un entorno empresarial, valdría la pena revisar los casos con mayor déficit acumulado. Identificar estos perfiles serviría para tomar decisiones estratégicas, como revisar políticas de descuento o la optimización de rutas logísticas para reducir costos operativos.
+
+| ID Cliente | Segmento | Pedidos | Ventas Totales | Ganancia Total | Rank en Segmento |
+| :--- | :--- | :---: | :---: | :---: | :---: |
+| 531 | Consumer | 16 | $11,535.27 | -$6,437.34 | 818 |
+| 1541 | Corporate | 6 | $4,998.43 | -$5,474.60 | 476 |
+| 360 | Corporate | 20 | $19,080.36 | -$3,790.10 | 475 |
+| 1357 | Consumer | 22 | $12,864.77 | -$3,700.18 | 817 |
+| 102 | Home Office | 7 | $6,851.93 | -$2,991.61 | 296 |
+| 476 | Consumer | 9 | $3,475.77 | -$2,891.34 | 816 |
+| 471 | Corporate | 23 | $14,362.81 | -$2,881.66 | 474 |
+| 1452 | Corporate | 6 | $3,914.95 | -$2,601.41 | 473 |
+| 646 | Home Office | 19 | $12,721.26 | -$2,544.71 | 295 |
+| 365 | Home Office | 25 | $12,738.72 | -$2,527.14 | 294 |
+
+---
+ 
+### 7. Eficiencia logística por modo de envío
+ 
+| Modo de Envío | Días Promedio | Días Mínimo | Días Máximo | Gasto Total Envío | Margen (%) |
+| :--- | :---: | :---: | :---: | :---: | :---: |
+| Same Day | 0.04 | 0 | 1 | $115,974.06 | 11.42% |
+| First Class | 2.18 | 1 | 3 | $308,103.25 | 11.37% |
+| Second Class | 3.23 | 2 | 5 | $314,112.62 | 11.40% |
+| Standard Class | 5.00 | 4 | 7 | $614,630.76 | 11.75% |
+ 
+**Hallazgo:** El margen es casi igual en todos los modos de envío (~11.4–11.75%), lo que sugiere que el costo de envío se transfiere al cliente de forma consistente. `Standard Class` concentra el 60% de las órdenes y es marginalmente el más rentable. `Same Day` tiene el menor volumen pero no penaliza el margen, lo que sugiere que su sobrecosto se recupera por el precio. El tiempo de envío es bastante predecible dentro de cada modo.
+ 
+---
+ 
+### 8. Productos más rentables
+ 
+Para identificar los mejores productos dentro de cada categoría:
+ 
+| Categoría | Producto | Ganancia Total | Margen (%) | Rank en Categoría |
+| :--- | :--- | :---: | :---: | :---: |
+| **Furniture** | Sauder Classic Bookcase, Traditional | $10,672.06 | 27.29% | 1 |
+| **Furniture** | Harbour Creations Executive Leather Armchair, Adjustable | $10,427.33 | 20.80% | 2 |
+| **Furniture** | SAFCO Executive Leather Armchair, Black | $7,154.28 | 17.07% | 3 |
+| **Office Supplies** | Hoover Stove, Red | $11,807.96 | 37.29% | 1 |
+| **Office Supplies** | Fellowes PB500 Electric Punch Plastic Comb Binding Machine with Manual Bind | $7,753.06 | 28.24% | 2 |
+| **Office Supplies** | Rogers Lockers, Single Width | $6,755.20 | 32.96% | 3 |
+| **Technology** | Canon imageCLASS 2200 Advanced Copier | $25,199.94 | 40.91% | 1 |
+| **Technology** | Cisco Smart Phone, Full Size | $17,238.52 | 22.55% | 2 |
+| **Technology** | Motorola Smart Phone, Full Size | $17,027.14 | 23.28% | 3 |
+ 
+**Hallazgo:** El `Canon imageCLASS 2200 Advanced Copier` es el producto más rentable de todo el catálogo, generando $25K de ganancia con un margen de casi 41%. En `Office Supplies`, las estufas Hoover dominan en rentabilidad con márgenes superiores al 37%. En `Furniture`, los libros y sillas de oficina lideran, pero con márgenes más modestos (20–29%) en comparación con las otras categorías.
+ 
