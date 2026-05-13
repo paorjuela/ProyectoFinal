@@ -65,10 +65,10 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
 ├── .gitignore
 ├── scripts                                           <- Scripts de SQL para ejecución del pipeline de datos
 │   ├── raw_data_scheme_creation.sql                  <- Script de carga inicial
-│   ├── analisis_preliminar.sql                       <- 
-│   ├── limpieza_y_normalizacion.sql                  <- Script de limpieza de datos y normalización de relaciones
-│   └── creacion_atributos_analiticos.sql             <- Script de creación de atributos analíticos
-├── ERD.png                                           <- Entity-Relationship Diagram
+│   ├── analisis_preliminar.sql                       <- Consultas de exploración para detectar nulos, inconsistencias en los IDs, etc.
+│   ├── limpieza_y_normalizacion.sql                  <- Script de limpieza de datos y normalización de tablas
+│   └── creacion_atributos_analiticos.sql             <- Script de creación de atributos analíticos y análisis de los datos normalizados
+├── ERD.png                                           <- Entity-Relationship Diagram (diagrama entidad-relación)
 
 ```
 
@@ -77,8 +77,10 @@ El objetivo principal de este proyecto es analizar un conjunto de datos para ide
 1. Descargar los datos en bruto del proyecto (véase [Fuente de datos](#fuente-de-datos)).
 2. Contar con `postgres 17.5` o superior instalado en la computadora o en el servidor donde se replicará el proyecto.
 3. Contar con una base de datos exclusiva para este proyecto. Todas las instrucciones del proyecto asumen que la sesión está conectada a la misma base de datos.
-4. ...
-5. El resto de las instrucciones asume que el directorio de trabajo de `psql` es la raíz de este proyecto.
+4. Crear el esquema `raw ` siguiendo las instrucciones de [Carga inicial](#carga-inicial).
+5. Ejecuta las consultas de [Análisis preliminar](#análisis-preliminar).
+6. Ejecuta el script dado en [Limpieza y normalización](#limpieza-de-datos-y-normalización-de-tablas).
+7. Ejecuta las consultas de [Atributos analíticos](#atributos-analíticos).
 
 
 ## Carga inicial
