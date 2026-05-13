@@ -7,12 +7,10 @@
 
 ## Introducción 
 ### Fuente de datos
-
 Para este proyecto se utilizan datos obtenidos de Kaggle, específicamente del conjunto [Global Super Store Dataset](https://www.kaggle.com/datasets/apoorvaappz/global-super-store-dataset/data). Este dataset fue recopilado en 2020 por Apoorva Mahalingappa, estudiante de Ciencia de Datos en el Great Lakes Institute of Management (India), con el propósito de analizar las compras en línea y extraer tendencias comerciales.
 
 
 ### Descripción general
-
 El Dataset contiene información sobre miles de transacciones comerciales realizadas por usuarios a través de la red, entre el 1 de enero de 2011 y el 31 de diciembre de 2014. Incluye datos relevantes, como la información de los compradores, su lugar de residencia, los montos y detalles de los productos, etcétera.
 
 El dataset es estático, pues tiene cierto carácter histórico, pero abarca un periodo de 4 años, lo que nos otorga una ventana de tiempo lo suficientemente amplia para identificar tendencias. Hay bastantes datos con los que se puede trabajar, además de que están relativamente en buena forma (i.e. no hay muchas inconsistencias), aunque hay renglones con datos faltantes (sobre todo en la columna "Postal Code"). 
@@ -104,7 +102,6 @@ Finalmente, ejecutamos el siguiente comando en una sesión de línea de comandos
 ```{psql}
 \copy "raw".orders FROM 'ruta_csv' WITH (FORMAT CSV, HEADER true, DELIMITER ',');
 ```
-
 
 ## Análisis Preliminar
 
@@ -199,8 +196,8 @@ $$E_{geography}=\text{geography-id', market, region}$$
 $$E_{order}=\text{order-id', customer-id', geography-id', order-priority}$$
 $$E_{order\text{-}product}=\text{order-product-id', order-id', product-id', ship-date, ship-mode, shipping-cost, sales, quantity, discount, profit}$$
 
-### Implementación SQL
-El script de normalización parte de la tabla `raw.orders` y construye el esquema `norm` tabla por tabla. El patrón que se repite en cada bloque es siempre el mismo: crear la nueva tabla, poblarla con los valores únicos de `raw.orders`, agregar una columna auxiliar `*_id_alt` en `raw.orders` que apunte al nuevo `id` generado, actualizar esa columna con un `UPDATE` y, finalmente, eliminar las columnas que ya migraron. A continuación se explican las operaciones no triviales.
+### Explicación de operaciones no triviales
+El script de normalización parte de la tabla `raw.orders`, y construye el esquema `norm` tabla por tabla. El patrón que se repite en cada bloque es siempre el mismo: crear la nueva tabla, poblarla con los valores únicos de `raw.orders`, agregar una columna auxiliar `*_id_alt` en `raw.orders` que apunte al nuevo `id` generado, actualizar esa columna con un `UPDATE` y, finalmente, eliminar las columnas que ya migraron. A continuación se explican en detalle las operaciones no triviales.
  
 #### `SELECT DISTINCT`
 ```sql
@@ -208,11 +205,9 @@ INSERT INTO norm.customer (customer_id, customer_name, segment)
     SELECT DISTINCT customer_id, customer_name, segment
     FROM raw.orders;
 ```
- 
-En la tabla `raw.orders` cada producto comprado genera una fila. Eso significa que un mismo cliente aparece repetido en tantas filas como productos haya comprado. `DISTINCT` colapsa todas esas repeticiones y se queda con una sola fila por combinación única de atributos. Sin esto se insertarían miles de duplicados.
+En la tabla `raw.orders` cada producto comprado genera una fila. Eso significa que un mismo cliente se repite tantas veces como productos haya comprado. `DISTINCT` colapsa todas esas repeticiones y se queda con una sola fila por combinación única de atributos. Sin esto se insertarían miles de duplicados.
  
 #### `UPDATE` con subconsulta
- 
 ```sql
 UPDATE raw.orders
 SET customer_id_alt = (
@@ -222,13 +217,10 @@ SET customer_id_alt = (
 )
 WHERE raw.orders.customer_id_alt IS NULL;
 ```
- 
 Una vez que `norm.customer` tiene sus propios `id`'s autogenerados, por cada fila de `raw.orders`, busca en `norm.customer` el `id` cuyo `customer_id` coincida. Ponemos `WHERE customer_id_alt IS NULL` para evitar sobreescribir filas que ya estuvieran actualizadas (por si el script se corriera parcialmente).
- 
 Este mismo patrón se repite para `product`, `geography` y `order`, adaptando las columnas según la clave natural de cada tabla.
- 
+
 #### `DISTINCT ON` con `GROUP BY` y `ORDER BY COUNT(*) DESC`
- 
 ```sql
 INSERT INTO norm.geography (city, state, country, market, region)
 SELECT DISTINCT ON (city, state, country)
@@ -237,23 +229,22 @@ FROM raw.orders
 GROUP BY city, state, country, market, region
 ORDER BY city, state, country, COUNT(*) DESC;
 ```
- 
-El problema es que 348 filas de Austria y Mongolia tienen dos valores distintos de `(market, region)` para la misma ciudad, lo que hace que un `SELECT DISTINCT` normal devuelva múltiples filas por ciudad y rompa el `UNIQUE (city, state, country)` de `norm.geography`.
+El problema es que 348 filas de Austria y Mongolia tienen dos valores distintos de `(market, region)` para la misma ciudad, lo que hace que un `SELECT DISTINCT` devuelva múltiples filas por ciudad y rompa el `UNIQUE (city, state, country)` de `norm.geography`.
  
 Nuestra solución fue:
-- `GROUP BY city, state, country, market, region` agrupa por la combinación completa para poder contar cuántas filas respaldan cada par `(market, region)`.
+- `GROUP BY city, state, country, market, region` agrupa por la combinación completa para poder contar cuántas filas respaldan cada par de `(market, region)`.
 - `ORDER BY city, state, country, COUNT(*) DESC` ordena los resultados poniendo primero, dentro de cada ciudad, el par `(market, region)` más frecuente.
 El resultado es que cada ciudad queda asociada a un único `(market, region)` que corresponde al valor más común en los datos, descartando la clasificación minoritaria, que se consideró como un error de captura.
  
 #### `DROP COLUMN` de la clave natural
- 
 ```sql
 ALTER TABLE norm.customer DROP COLUMN customer_id;
 ```
- 
 Después de que `raw.orders` ya apunta al `id` artificial, el `customer_id` de texto en `norm.customer` deja de ser necesario como columna, pues su función era servir de puente durante la migración. Eliminarlo evita redundancia y deja la tabla con únicamente los atributos que le corresponden según la $\text{DF}$.
  
 ---
+Después de `limpieza-y-normalizacion`, se tiene:
 
-El esquema ERD que representa estas $\text{Relvars}$ en forma de tablas está en [esquema_erd_fnbc.jpeg](https://github.com/paorjuela/analisis-comercio-electronico/blob/normalizacion-tablas/esquema_erd_fnbc.jpeg).
+![ERD](/ERD.png)
 
+## Atributos analíticos
