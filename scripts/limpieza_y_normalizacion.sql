@@ -4,6 +4,55 @@ ALTER TABLE "raw".orders DROP COLUMN row_id;
 --DROP SCHEMA IF EXISTS norm CASCADE;
 CREATE SCHEMA IF NOT EXISTS norm;
 
+-- UNIFICANDO SUBCATEGORÍAS DE PRODUCTOS (lo dejó comentado para que no afecte mi comparación con sus resultados)
+-- En este caso estoy priorizando la primera caetegoría de forma alfabética, pero podría ser por primer fecha de pedido o similar
+/*
+WITH unicos AS (
+    SELECT DISTINCT product_id, category, sub_category
+    FROM "raw".orders
+),
+ranking_subcategorias AS (
+    SELECT product_id,
+           category,
+           sub_category,
+           FIRST_VALUE(sub_category) OVER w AS sub_category_first_value
+    FROM unicos
+    WINDOW w AS (PARTITION BY product_id, category ORDER BY sub_category)
+)
+UPDATE "raw".orders
+SET sub_category = ranking_subcategorias.sub_category_first_value
+FROM ranking_subcategorias
+WHERE "raw".orders.product_id = ranking_subcategorias.product_id
+      AND "raw".orders.category = ranking_subcategorias.category
+      AND "raw".orders.sub_category != ranking_subcategorias.sub_category_first_value;
+*/
+
+-- UNIFICANDO NOMBRES DE PRODUCTOS (lo dejó comentado para que no afecte mi comparación con sus resultados)
+-- En este caso estoy priorizando el primer nombre de forma alfabética, pero podría ser por primer fecha de pedido o similar
+/*
+WITH unicos AS (
+    SELECT DISTINCT product_id, category, sub_category, product_name
+    FROM "raw".orders
+),
+ranking_product_names AS (
+    SELECT product_id,
+           category,
+           sub_category,
+           product_name,
+           FIRST_VALUE(product_name) OVER w AS product_name_first_value
+    FROM unicos
+    WINDOW w AS (PARTITION BY product_id , category, sub_category ORDER BY product_name)
+)
+UPDATE "raw".orders
+SET product_name = ranking_product_names.product_name_first_value
+FROM ranking_product_names
+WHERE "raw".orders.product_id = ranking_product_names.product_id
+      AND "raw".orders.category = ranking_product_names.category
+      AND "raw".orders.sub_category = ranking_product_names.sub_category
+      AND "raw".orders.product_name != ranking_product_names.product_name_first_value;
+ */
+
+
 --crear tabla customer
 --DROP TABLE IF EXISTS norm.customer;
 CREATE TABLE norm.customer (
