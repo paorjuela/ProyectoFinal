@@ -192,3 +192,21 @@ FROM unicos AS t1
 JOIN unicos AS t2 ON t1.order_id = t2.order_id
 	              AND (t1.order_date != t2.order_date
 	              OR t1.customer_id != t2.customer_id);
+
+
+-- EQUIVALENTE
+SELECT order_id,
+       COUNT(DISTINCT customer_id) AS cnt_customer_id,
+       COUNT(DISTINCT order_date) AS cnt_order_date,
+       COUNT(DISTINCT ship_date) AS cnt_ship_date
+FROM "raw".orders
+GROUP BY order_id
+HAVING COUNT(DISTINCT order_date) > 1 OR COUNT(DISTINCT customer_id) > 1 OR COUNT(DISTINCT ship_date) > 1
+ORDER BY cnt_customer_id DESC;
+
+
+
+SELECT *
+FROM "raw".orders
+WHERE order_id = 'ES-2014-3566095';
+-- FIN DE EQUIVALENTE
